@@ -3,6 +3,8 @@
 
 ![Hermes Agent Mobile demo](demo/hermes-agent-mobile-demo.gif)
 
+[Download signed Android APK](https://github.com/areu01or00/Hermes-Agent-Mobile-Client/raw/main/apk/hermes-agent-mobile-client-release.apk)
+
 This folder is an open-source snapshot of the current project state: a thin
 Android WebView client that loads a running Hermes dashboard.
 
