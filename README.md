@@ -126,6 +126,60 @@ For AWS Lightsail, also confirm the instance firewall has inbound TCP `9119`
 open and the instance is reachable on SSH. If both SSH and `9119` time out while
 Lightsail says ports are open, rebooting the instance can restore networking.
 
+## Instructions for agents
+
+If a user gives you this repo and says "make it work for me", treat the Android
+app as a client and verify the Hermes dashboard first.
+
+Recommended order:
+
+1. Ask where Hermes Agent should run: the user's PC on the same Wi-Fi, a LAN
+   machine, or a VPS/cloud host.
+2. Verify Hermes exists on that host:
+
+```bash
+command -v hermes
+hermes --version
+```
+
+3. Start the dashboard with embedded TUI support:
+
+```bash
+hermes dashboard --host 0.0.0.0 --port 9119 --no-open --insecure --tui
+```
+
+4. From another machine on the same route as the phone, verify:
+
+```bash
+curl -fsS http://<host>:9119/api/status
+curl -fsS http://<host>:9119/chat
+```
+
+5. For VPS/cloud hosts, confirm the service is listening on all interfaces and
+   the firewall/security group allows inbound TCP `9119`:
+
+```bash
+sudo ss -ltnp | grep 9119
+```
+
+6. If the user wants a persistent VPS setup, use the included helper:
+
+```bash
+cd scripts
+chmod +x setup-vps-dashboard.sh
+./setup-vps-dashboard.sh
+```
+
+7. Only debug the APK after `/api/status` and `/chat` are reachable from the
+   phone network. Most connection failures are wrong URL, firewall, dashboard
+   not running, dashboard bound to localhost, or missing `--tui`.
+8. Do not make hidden edits to the user's Hermes Agent checkout as a default
+   fix. This client is intended to work with stock Hermes dashboard. If a
+   Hermes-side change is genuinely required, document it as an upstream
+   compatibility issue.
+9. Known mobile caveat: Android soft-keyboard input is adapted in the APK.
+   Terminal scroll inside WebView may still vary by device/WebView version.
+
 ## Build APK
 
 ```bash
