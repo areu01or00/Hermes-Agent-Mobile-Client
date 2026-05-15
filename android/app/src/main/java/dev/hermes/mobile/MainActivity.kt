@@ -124,6 +124,7 @@ class MainActivity : ComponentActivity() {
                     if (url.startsWith("http://") || url.startsWith("https://")) {
                         injectMobileChrome(view)
                         injectMobileInputBridge(view)
+                        triggerTerminalRelayout(view)
                     }
                 }
 
@@ -627,18 +628,32 @@ class MainActivity : ComponentActivity() {
                 .edit()
                 .putInt(PREF_TEXT_ZOOM, zoom)
                 .apply()
+            triggerTerminalRelayout(webView)
         }
 
         slider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            var changedDuringDrag = false
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (!fromUser) return
                 val zoom = (progress + 60).coerceIn(60, 160)
                 title.text = "Text Size: ${zoom}%"
                 applyZoom(zoom)
+                changedDuringDrag = true
             }
 
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                changedDuringDrag = false
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                if (!changedDuringDrag) return
+                val url = webView.url.orEmpty()
+                if (!showingConnectionHub && (url.startsWith("http://") || url.startsWith("https://"))) {
+                    // Fallback: xterm occasionally ignores synthetic resize after text zoom.
+                    // Reload guarantees refit without requiring manual portrait<->landscape rotate.
+                    webView.postDelayed({ webView.reload() }, 120)
+                }
+            }
         })
 
         AlertDialog.Builder(this)
@@ -753,6 +768,42 @@ class MainActivity : ComponentActivity() {
                 null,
             )
         }
+    }
+
+    private fun triggerTerminalRelayout(view: WebView) {
+        view.postDelayed({
+            view.evaluateJavascript(
+                """
+                (function(){
+                  var root = document.documentElement;
+                  var prevWidth = root.style.width;
+                  // Force a measurable layout delta so xterm ResizeObserver refits columns.
+                  root.style.width = 'calc(100% - 1px)';
+                  setTimeout(function(){ root.style.width = prevWidth || ''; }, 90);
+                  window.dispatchEvent(new Event('orientationchange'));
+                  window.dispatchEvent(new Event('resize'));
+                  if (window.visualViewport) {
+                    window.visualViewport.dispatchEvent(new Event('resize'));
+                  }
+                })();
+                """.trimIndent(),
+                null,
+            )
+        }, 90)
+        view.postDelayed({
+            view.evaluateJavascript(
+                """
+                (function(){
+                  window.dispatchEvent(new Event('orientationchange'));
+                  window.dispatchEvent(new Event('resize'));
+                  if (window.visualViewport) {
+                    window.visualViewport.dispatchEvent(new Event('resize'));
+                  }
+                })();
+                """.trimIndent(),
+                null,
+            )
+        }, 260)
     }
 
     private fun injectMobileInputBridge(view: WebView) {
