@@ -1,0 +1,21 @@
+# Gradle / Android build output
+.gradle/
+build/
+**/build/
+
+# Local Android configuration
+local.properties
+
+# IDE files
+.idea/
+*.iml
+
+# OS / editor noise
+.DS_Store
+*.swp
+
+# Runtime logs
+*.log
+
+# Keep the intentionally published debug APK in apk/.
+!apk/hermes-agent-mobile-client-debug.apk
