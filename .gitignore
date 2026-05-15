@@ -17,5 +17,12 @@ local.properties
 # Runtime logs
 *.log
 
-# Keep the intentionally published debug APK in apk/.
+# Signing material must stay private.
+*.jks
+*.keystore
+*.p12
+*.pem
+
+# Keep the intentionally published APK artifacts in apk/.
 !apk/hermes-agent-mobile-client-debug.apk
+!apk/hermes-agent-mobile-client-release.apk

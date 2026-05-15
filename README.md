@@ -14,7 +14,7 @@ iOS is not implemented in this repo.
   come from Hermes server).
 - Owns Android soft-keyboard adaptation in the APK so a stock Hermes dashboard
   can be used without patching each user's PC/VPS checkout.
-- Includes a built debug APK for quick testing.
+- Includes a signed APK for quick sideload testing.
 
 ## What this is not
 
@@ -25,9 +25,28 @@ iOS is not implemented in this repo.
 ## Repo layout
 
 - `android/` - Android Studio / Gradle project
-- `apk/hermes-agent-mobile-client-debug.apk` - current debug APK artifact
+- `apk/hermes-agent-mobile-client-release.apk` - signed APK artifact
+- `apk/hermes-agent-mobile-client-debug.apk` - debug APK artifact
+- `demo/hermes-agent-mobile-demo.mp4` - trimmed app demo recording
 - `scripts/run-emulator.sh` - helper script for emulator startup
 - `scripts/setup-vps-dashboard.sh` - one-shot VPS dashboard setup
+
+## Demo
+
+<video src="demo/hermes-agent-mobile-demo.mp4" controls width="360"></video>
+
+If the embedded player does not render, open:
+
+`demo/hermes-agent-mobile-demo.mp4`
+
+## Download APK
+
+Direct APK download:
+
+`https://github.com/areu01or00/Hermes-Agent-Mobile-Client/raw/main/apk/hermes-agent-mobile-client-release.apk`
+
+Android may ask you to allow "Install unknown apps" for the browser or file
+manager used to open the APK.
 
 ## Requirements
 
@@ -66,7 +85,7 @@ includes `window.__HERMES_DASHBOARD_EMBEDDED_CHAT__=true` when `--tui` is on).
 Install:
 
 ```bash
-adb install -r apk/hermes-agent-mobile-client-debug.apk
+adb install -r apk/hermes-agent-mobile-client-release.apk
 ```
 
 Launch app:
@@ -119,6 +138,10 @@ JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ./gradlew assembleDebug
 Output:
 
 `android/app/build/outputs/apk/debug/app-debug.apk`
+
+The published APK in `apk/hermes-agent-mobile-client-release.apk` is signed
+with a private release keystore. Keep that keystore private; future update APKs
+must use the same key or Android will reject them as updates.
 
 ## Notes for contributors
 
