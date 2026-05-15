@@ -96,6 +96,7 @@ class MainActivity : ComponentActivity() {
             settings.setSupportZoom(false)
             settings.builtInZoomControls = false
             settings.displayZoomControls = false
+            settings.textZoom = 90
             settings.userAgentString = "${settings.userAgentString} HermesAgentMobile/0.1"
 
             webChromeClient = object : WebChromeClient() {
