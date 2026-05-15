@@ -77,10 +77,6 @@ class MainActivity : ComponentActivity() {
                 override fun sendKey(key: String) {
                     sendHermesMobileKey(key)
                 }
-
-                override fun scroll(deltaY: Float) {
-                    sendHermesMobileScroll(deltaY)
-                }
             }
 
             setBackgroundColor(Color.rgb(4, 28, 28))
@@ -761,15 +757,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun sendHermesMobileScroll(deltaY: Float) {
-        webView.post {
-            webView.evaluateJavascript(
-                "window.HermesMobileNativeInput&&window.HermesMobileNativeInput.scroll(${deltaY.toInt()})",
-                null,
-            )
-        }
-    }
-
     private fun triggerTerminalRelayout(view: WebView) {
         view.postDelayed({
             view.evaluateJavascript(
@@ -942,10 +929,48 @@ class MainActivity : ComponentActivity() {
                 return true;
               }
 
+              function installTerminalTouchScroll(){
+                var root = document.querySelector('.xterm');
+                if(!root || root.__hermesMobileTouchScrollBound) return !!root;
+                root.__hermesMobileTouchScrollBound = true;
+                var lastY = null;
+                var debt = 0;
+                root.addEventListener('touchstart', function(e){
+                  if(!e.touches || e.touches.length !== 1) return;
+                  lastY = e.touches[0].clientY;
+                  debt = 0;
+                }, {passive:true});
+                root.addEventListener('touchmove', function(e){
+                  if(!e.touches || e.touches.length !== 1 || lastY === null) return;
+                  var y = e.touches[0].clientY;
+                  debt += (lastY - y);
+                  lastY = y;
+                  if(Math.abs(debt) >= 18){
+                    scrollTerminal(debt);
+                    debt = 0;
+                  }
+                }, {passive:true});
+                root.addEventListener('touchend', function(){ lastY = null; debt = 0; }, {passive:true});
+                root.addEventListener('touchcancel', function(){ lastY = null; debt = 0; }, {passive:true});
+                return true;
+              }
+
+              installTerminalTouchScroll();
+              if(!window.__hermesMobileTerminalScrollObserver){
+                window.__hermesMobileTerminalScrollObserver = new MutationObserver(function(){
+                  installTerminalTouchScroll();
+                });
+                window.__hermesMobileTerminalScrollObserver.observe(document.documentElement, {
+                  childList:true,
+                  subtree:true
+                });
+              }
+              setTimeout(installTerminalTouchScroll, 300);
+              setTimeout(installTerminalTouchScroll, 1000);
+
               window.HermesMobileNativeInput = {
                 text: sendText,
-                key: sendKey,
-                scroll: scrollTerminal
+                key: sendKey
               };
             })();
             """.trimIndent(),
@@ -978,12 +1003,9 @@ class HermesWebView(context: Context) : WebView(context) {
     interface MobileInputSink {
         fun sendText(text: String)
         fun sendKey(key: String)
-        fun scroll(deltaY: Float)
     }
 
     var mobileInputSink: MobileInputSink? = null
-    private var lastTouchY: Float? = null
-    private var scrollDebt = 0f
 
     override fun onCheckIsTextEditor(): Boolean = true
 
@@ -1034,29 +1056,5 @@ class HermesWebView(context: Context) : WebView(context) {
         }
     }
 
-    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
-        when (event.actionMasked) {
-            MotionEvent.ACTION_DOWN -> {
-                lastTouchY = event.y
-                scrollDebt = 0f
-            }
-            MotionEvent.ACTION_MOVE -> {
-                val previous = lastTouchY
-                if (previous != null) {
-                    val delta = previous - event.y
-                    lastTouchY = event.y
-                    scrollDebt += delta
-                    if (kotlin.math.abs(scrollDebt) >= 24f) {
-                        mobileInputSink?.scroll(scrollDebt)
-                        scrollDebt = 0f
-                    }
-                }
-            }
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                lastTouchY = null
-                scrollDebt = 0f
-            }
-        }
-        return super.dispatchTouchEvent(event)
-    }
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean = super.dispatchTouchEvent(event)
 }
