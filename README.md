@@ -184,6 +184,9 @@ chmod +x setup-vps-dashboard.sh
 
 - Terminal scroll inside the embedded Hermes TUI may still vary by device and
   WebView version.
+- The Hermes TUI startup banner/sigil may appear in landscape but not portrait.
+  This appears to be upstream dashboard/TUI responsive behavior when terminal
+  columns are narrow, not a launcher icon or APK packaging issue.
 - Hermes dashboard plugin pages are inherited from the upstream dashboard, but
   this Android client has not validated every plugin page yet.
 - Under the dashboard `Plugins` section, `Kanban` and `Example` are currently
@@ -217,5 +220,7 @@ must use the same key or Android will reject them as updates.
 - Terminal scroll on Android WebView is still an active compatibility area. The
   current client attempts wheel and Shift+Arrow event bridging, but contributors
   should verify behavior on real devices before treating it as complete.
+- Portrait mode may not show the full Hermes TUI startup banner/sigil because
+  the upstream terminal UI changes output at narrow widths.
 - Plugin pages such as `Kanban` and `Example` need explicit mobile validation
   before they are documented as working.
